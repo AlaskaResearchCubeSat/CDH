@@ -159,6 +159,9 @@ void cmd_parse(void *p) __toplevel{
   system_stat.EPS_addr=0x16;
 
   printf("Turn on LEDL NMOS P6.6\r\n");
+  //Turn on MOSFET to power LEDL from EPS
+  P6OUT|=BIT6;
+  P6DIR|=BIT6;
   printf("Send interrupt to LEDL inidcating CLYDE is ON P1.0\r\n");
   BUS_int_set(BIT0);
 
