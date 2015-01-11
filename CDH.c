@@ -280,7 +280,10 @@ void cmd_parse(void *p) __toplevel{
           printf("Failed to send POWER ON to COMM %s\r\n",BUS_error_str(resp));
       }
       beacon_on = 1;
-      BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+BeaconONTime,&cmd_parse_evt,CMD_PARSE_BEACON_ON);
+      resp=BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+BeaconONTime,&cmd_parse_evt,CMD_PARSE_BEACON_ON);
+      if(resp!=RET_SUCCESS){
+          printf("Failed to set STATUS ON Alarm %s\r\n",BUS_error_str(resp));
+      }
     }
 
     if(e&CMD_PARSE_BEACON_ON){                        // TURN ON STATUS MESSAGE IN BEACON
