@@ -58,9 +58,9 @@ enum{CMD_PARSE_GET_STAT_CMD=1<<0,CMD_PARSE_SEND_STAT_CMD=1<<1,CMD_PARSE_SPI_CLEA
 
 //FOR TESTING
 #define minV 40
-#define DeployAntennaTime 0x0001E000  // 2 min = 2*60*1024
-#define RFONTime 0x0004B000           //5 min = 5*60*1024
-#define BeaconONTime 0x0004B000       //5 min = 5*60*1024 after RFONTime
+#define DeployAntennaTime         (20ul*1024ul)   // 20 sec
+#define RFONTime                  (30ul*1024ul)   //30 sec
+#define BeaconONTime              (5ul*60ul*1024ul) //5 min = 5*60*1024 after RFONTime
 
 extern short beacon_on;
 
