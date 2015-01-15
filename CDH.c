@@ -1,5 +1,6 @@
 #include <msp430.h>
 #include <ctl_api.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <ARCbus.h>
@@ -161,6 +162,20 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
   return ERR_UNKNOWN_CMD;
 }
 
+int CDH_print=0;
+
+void cdh_print(const char *fmt,...){
+  va_list args;
+  if(CDH_print){
+    //initialize va_list
+    va_start(args,fmt);
+    //call printf
+    vprintf(fmt,args);
+    //cleanup va_list
+    va_end(args);
+  }
+}
+
 // this is where the work happens
 void cmd_parse(void *p) __toplevel{
   unsigned int e, launch=0;
@@ -176,11 +191,11 @@ void cmd_parse(void *p) __toplevel{
   system_stat.IMG_addr=BUS_ADDR_IMG;
   system_stat.EPS_addr=0x16;
 
-  printf("Turn on LEDL NMOS P6.6\r\n");
+  cdh_print("Turn on LEDL NMOS P6.6\r\n");
   //Turn on MOSFET to power LEDL from EPS
   P6OUT|=BIT6;
   P6DIR|=BIT6;
-  printf("Send interrupt to LEDL inidcating CLYDE is ON P1.0\r\n");
+  cdh_print("Send interrupt to LEDL inidcating CLYDE is ON P1.0\r\n");
   BUS_int_set(BIT0);
 
   //init event
@@ -189,13 +204,13 @@ void cmd_parse(void *p) __toplevel{
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&cmd_parse_evt,CMD_PARSE_ALL,CTL_TIMEOUT_NONE,0);
 
     if(e&CMD_PARSE_SPI_CLEAR){
-      puts("SPI bus Free\r");
+      cdh_print("SPI bus Free\r");
       //TODO: keep track of who is using SPI
     }
 
     if(e&CMD_PARSE_GET_STAT || e&CMD_PARSE_GET_STAT_CMD){
       system_stat.flags=0;						//clear status flags from old status packet
-      printf("Requesting status\r\n");                                  //print message
+      cdh_print("Requesting status\r\n");                                  //print message
       ptr=BUS_cmd_init(buff,CMD_SUB_STAT);                              //setup packet 
       time=get_ticker_time();                                           //get time
       ptr[0]=time>>24;							//write time into the array
@@ -206,7 +221,7 @@ void cmd_parse(void *p) __toplevel{
       //Check if there was an error
       if(resp!=RET_SUCCESS){
         //Print error
-        printf("Error sending status %s\r\n",BUS_error_str(resp));
+        cdh_print("Error sending status %s\r\n",BUS_error_str(resp));
       }
     }
 
@@ -214,7 +229,7 @@ void cmd_parse(void *p) __toplevel{
 	// if beacon_on true send data to comm
     // if beacon_on false check eps for positive power set time counter for antenna deployment and beacon_on
       if(beacon_on){							// beacon_on = true, Send data to COMM
-        printf("Sending status\r\n");
+        cdh_print("Sending status\r\n");
         system_stat.type=SPI_BEACON_DAT;                        // Type = SPI_BEACON_DAT
         time=get_ticker_time();					//get time for beacon
         system_stat.time0=time>>24;				//write time into status
@@ -224,54 +239,54 @@ void cmd_parse(void *p) __toplevel{
 												//send SPI data
         resp=BUS_SPI_txrx(BUS_ADDR_COMM,(unsigned char*)&system_stat,NULL,sizeof(STAT_PACKET)-BUS_SPI_CRC_LEN);
         if(resp!=RET_SUCCESS){
-          printf("Error : failed to send beacon data : %s\r\n",BUS_error_str(resp));
+          cdh_print("Error : failed to send beacon data : %s\r\n",BUS_error_str(resp));
         }
         ptr=(unsigned char*)&system_stat;
 		
 		//FOR TEST ONLY - Print out status buffer
         for(i=0;i<11;i++){
-          printf("0x%02X ",ptr[i]);
+          cdh_print("0x%02X ",ptr[i]);
         }
-        printf("\r\n");
-        printf("0x%02X ",system_stat.LEDL_addr);
+        cdh_print("\r\n");
+        cdh_print("0x%02X ",system_stat.LEDL_addr);
         PrintBuffer(system_stat.LEDL_stat, sizeof(system_stat.LEDL_stat));
-        printf("0x%02X ",system_stat.ACDS_addr);
+        cdh_print("0x%02X ",system_stat.ACDS_addr);
         PrintBuffer(system_stat.ACDS_stat, sizeof(system_stat.ACDS_stat));
-        printf("0x%02X ",system_stat.COMM_addr);
+        cdh_print("0x%02X ",system_stat.COMM_addr);
         PrintBuffer(system_stat.COMM_stat, sizeof(system_stat.COMM_stat));
-        printf("0x%02X ",system_stat.IMG_addr);
+        cdh_print("0x%02X ",system_stat.IMG_addr);
         PrintBuffer(system_stat.IMG_stat, sizeof(system_stat.IMG_stat));
-        printf("0x%02X ",system_stat.EPS_addr);
+        cdh_print("0x%02X ",system_stat.EPS_addr);
         PrintBuffer((char*)&system_stat.EPS_stat, sizeof(system_stat.EPS_stat));
 
         if((system_stat.flags&STAT_ALL_VALID)==STAT_ALL_VALID){
-          printf("All subsystems reported status\r\n");
+          cdh_print("All subsystems reported status\r\n");
         }else{
           if(!(system_stat.flags&STAT_EPS_VALID)) {
-            printf("No Status Info for EPS\r\n");
+            cdh_print("No Status Info for EPS\r\n");
           }
           if(!(system_stat.flags&STAT_LEDL_VALID)){
-            printf("No Status Info for LEDL\r\n");
+            cdh_print("No Status Info for LEDL\r\n");
           }
           if(!(system_stat.flags&STAT_ACDS_VALID)){
-            printf("No Status Info for ACDS\r\n");
+            cdh_print("No Status Info for ACDS\r\n");
           }
           if(!(system_stat.flags&STAT_COMM_VALID)){
-            printf("No Status Info for COMM\r\n");
+            cdh_print("No Status Info for COMM\r\n");
           }
           if(!(system_stat.flags&STAT_IMG_VALID)){
-            printf("No Status Info for IMG\r\n");
+            cdh_print("No Status Info for IMG\r\n");
           }
         }
 		//FOR TEST ONLY - Print out status buffer
 		
       } else { // beacon_on = FALSE start_up routine
       // check eps status for positive power
-        printf("Waiting for Solar Cell voltage above threshold: %d\r\n",system_stat.EPS_stat.Y_voltage);
+        cdh_print("Waiting for Solar Cell voltage above threshold: %d\r\n",system_stat.EPS_stat.Y_voltage);
         if((system_stat.EPS_stat.Y_voltage>= minV) || (system_stat.EPS_stat.X_voltage>=minV) || (system_stat.EPS_stat.Z_voltage>=minV)){ // positive voltage detected
-          printf("Solar Cell voltage above threshold\r\n");
+          cdh_print("Solar Cell voltage above threshold\r\n");
           if(!launch){ //assuming we haven't been here before start the deployment timers.
-            printf("Set Antenna Deployment and RF ON timers\r\n");
+            cdh_print("Set Antenna Deployment and RF ON timers\r\n");
             BUS_set_alarm(BUS_ALARM_0,get_ticker_time()+DeployAntennaTime,&cmd_parse_evt,CMD_PARSE_ANTENNA_DEPLOY);
             BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+RFONTime,&cmd_parse_evt,CMD_PARSE_RF_ON);
             launch=1;
@@ -284,43 +299,43 @@ void cmd_parse(void *p) __toplevel{
     }
 
     if(e&CMD_PARSE_ANTENNA_DEPLOY){
-      puts("Deploy antenna\r");
+      cdh_print("Deploy antenna\r");
       // set timer to wait for antenna deployment (30 min?)
       // when antenna deployment timer times out deploy antenna
     }
 
     if(e&CMD_PARSE_RF_ON){                          // TURN ON HELLO MESSAGE IN BEACON
-      puts("Turn Beacon ON\r");
+      cdh_print("Turn Beacon ON\r");
       // when timer times out send on command to comm, set beacon_on = 1;
       ptr=BUS_cmd_init(buff,CMD_SUB_ON);
       resp=BUS_cmd_tx(BUS_ADDR_COMM,buff,0,0,BUS_I2C_SEND_FOREGROUND);
       if(resp!=RET_SUCCESS){
-          printf("Failed to send POWER ON to COMM %s\r\n",BUS_error_str(resp));
+          cdh_print("Failed to send POWER ON to COMM %s\r\n",BUS_error_str(resp));
       }
       beacon_on = 1;
       resp=BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+BeaconONTime,&cmd_parse_evt,CMD_PARSE_BEACON_ON);
       if(resp!=RET_SUCCESS){
-          printf("Failed to set STATUS ON Alarm %s\r\n",BUS_error_str(resp));
+          cdh_print("Failed to set STATUS ON Alarm %s\r\n",BUS_error_str(resp));
       }
     }
 
     if(e&CMD_PARSE_BEACON_ON){                        // TURN ON STATUS MESSAGE IN BEACON
-       puts("Turn on Status Beacon Message\r");
+       cdh_print("Turn on Status Beacon Message\r");
        ptr=BUS_cmd_init(buff,CMD_BEACON_ON);
        resp=BUS_cmd_tx(BUS_ADDR_COMM,buff,0,0,BUS_I2C_SEND_FOREGROUND);
        if(resp!=RET_SUCCESS){
-          printf("Failed to send BEACON ON to COMM %s\r\n",BUS_error_str(resp));
+          cdh_print("Failed to send BEACON ON to COMM %s\r\n",BUS_error_str(resp));
       }
     }
 
     if(e&CMD_PARSE_GS_CMD){ //Figure out what the command is and where it needs to go, then send it.
         switch(GS_CMD[0]){
         case BUS_ADDR_IMG:
-           printf("GS CMD to IMG\r\n");
-          // for(i=0;i<GS_CMD[1]+3;i++) printf("0x%02x \r\n",GS_CMD[i]);
+           cdh_print("GS CMD to IMG\r\n");
+          // for(i=0;i<GS_CMD[1]+3;i++) cdh_print("0x%02x \r\n",GS_CMD[i]);
            switch(GS_CMD[2]){
            case CMD_IMG_TAKE_TIMED_PIC:
-             puts("Sending CMD_IMG_TAKE_TIMED_PIC to IMG\r\n");
+             cdh_print("Sending CMD_IMG_TAKE_TIMED_PIC to IMG\r\n");
               //setup packet 
               ptr=BUS_cmd_init(buff,CMD_IMG_TAKE_TIMED_PIC);
               //fill in telemetry data
@@ -330,18 +345,18 @@ void cmd_parse(void *p) __toplevel{
               //send command
               resp=BUS_cmd_tx(BUS_ADDR_IMG,buff,GS_CMD[1],0,BUS_I2C_SEND_FOREGROUND);
               if(resp!=RET_SUCCESS){
-                  printf("Failed to send GS CMD to CDHs %s\r\n",BUS_error_str(resp));
+                  cdh_print("Failed to send GS CMD to CDHs %s\r\n",BUS_error_str(resp));
               }
              break;
            }
            break;
         case BUS_ADDR_ACDS:
-           printf("GS CMD to ADCS\r\n");
-           for(i=0;i<GS_CMD[1]+3;i++) printf("0x%02x \r\n",GS_CMD[i]);
+           cdh_print("GS CMD to ADCS\r\n");
+           for(i=0;i<GS_CMD[1]+3;i++) cdh_print("0x%02x \r\n",GS_CMD[i]);
            break;
         case BUS_ADDR_LEDL:
-           printf("GS CMD to LEDL\r\n");
-           for(i=0;i<GS_CMD[1]+3;i++) printf("0x%02x \r\n",GS_CMD[i]);
+           cdh_print("GS CMD to LEDL\r\n");
+           for(i=0;i<GS_CMD[1]+3;i++) cdh_print("0x%02x \r\n",GS_CMD[i]);
            break;
         }
 
@@ -360,30 +375,30 @@ void sub_events(void *p) __toplevel{
 
     if(e&SUB_EV_PWR_OFF){
       //print message
-      puts("System Powering Down\r");
+      cdh_print("System Powering Down\r");
     }
 
     if(e&SUB_EV_PWR_ON){
       //print message
-      puts("System Powering Up\r");
+      cdh_print("System Powering Up\r");
     }
 
     if(e&SUB_EV_SPI_DAT){
-      puts("SPI data recived:\r");
+      cdh_print("SPI data recived:\r");
       //get length
       len=arcBus_stat.spi_stat.len;
       //print out data
       for(i=0;i<len;i++){
-        //printf("0x%02X ",rx[i]);
-        printf("%03i ",arcBus_stat.spi_stat.rx[i]);
+        //cdh_print("0x%02X ",rx[i]);
+        cdh_print("%03i ",arcBus_stat.spi_stat.rx[i]);
       }
-      printf("\r\n");
+      cdh_print("\r\n");
       //free buffer
       BUS_free_buffer_from_event();
     }
 
     if(e&SUB_EV_SPI_ERR_CRC){
-      puts("SPI bad CRC\r");
+      cdh_print("SPI bad CRC\r");
     }
   }
 }
@@ -392,10 +407,10 @@ void PrintBuffer(char *dat, unsigned int len){
    int i;
 
    for(i=0;i<len;i++){
-      printf("0X%02X ", dat[i]);
+      cdh_print("0X%02X ", dat[i]);
       if((i)%15==14){
-        printf("\r\n");
+        cdh_print("\r\n");
       }
     }
-    printf("\r\n");
+    cdh_print("\r\n");
 }

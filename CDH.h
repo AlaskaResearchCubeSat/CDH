@@ -64,6 +64,8 @@ enum{CMD_PARSE_GET_STAT_CMD=1<<0,CMD_PARSE_SEND_STAT_CMD=1<<1,CMD_PARSE_SPI_CLEA
 
 extern short beacon_on;
 
+extern int CDH_print;
+
 extern STAT_PACKET system_stat;
 extern char GS_CMD[30];
 

@@ -354,7 +354,24 @@ int magCmd(char **argv,unsigned short argc){
     return 0;
 }
 
-
+int CDH_print_cmd(char **argv,unsigned short argc){
+  if(argc>1){
+    printf("Error : too many arguments\r\n");
+    return 1;
+  }
+  if(argc==1){
+    if(!strcmp("on",argv[1])){
+      CDH_print=1;
+    }else if(!strcmp("off",argv[1])){
+      CDH_print=0;
+    }else{
+      printf("Error : unrecognized argument \"%s\"\r\n",argv[1]);
+      return 2;
+    }
+  }
+  printf("CDH printing is : %s\r\n",CDH_print?"on":"off");
+  return 0;
+}
 
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
@@ -366,6 +383,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     {"stat","\r\n\t""Get status from all subsystems.", statCmd},
                     {"beacon","[on|off]\r\n\t""Turn on/off status requests and beacon\r\n",beaconCmd},
                     {"mag","[all|single]...""\r\n\t""read data from magnetomiters",magCmd},
+                    {"cdhp","[on|off]...""\r\n\t""turn on or off printing",CDH_print_cmd},
                    //end of list
 
                    {NULL,NULL,NULL}};
