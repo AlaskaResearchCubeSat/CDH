@@ -4,7 +4,9 @@
 #include <string.h>
 #include <ARCbus.h>
 #include "CDH.h"
-
+#include <Error.h>
+#include "mag.h"
+#include "CDH_errors.h"
 
 CTL_EVENT_SET_t cmd_parse_evt;
 
@@ -47,11 +49,27 @@ void task_tick(void) __ctl_interrupt[TIMERA1_VECTOR]{
   }
 }
 
+CTL_EVENT_SET_t mag_evt;
+
+MAG_DAT magData;
+
 //handle subsystem specific commands //called by the main ARCbus task don't linger here
 int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned short len){
   int i;
   
   switch(cmd){
+    case CMD_MAG_DATA:
+      //check packet length
+      if(len!=sizeof(magData)){
+        //length incorrect, report error and exit
+        report_error(ERR_LEV_ERROR,CDH_ERR_SRC_MAG,MAG_ERR_BAD_PACKET_LENGTH,len);
+        return ERR_PK_LEN;
+      }
+      memcpy(&magData,dat,sizeof(magData));
+      //sensor data recieved set event
+      ctl_events_set_clear(&mag_evt,MAG_EVT_DAT_REC,0);
+    return RET_SUCCESS;
+      
     case CMD_GS_DATA:				           //Ground Station Command
       if(len==(dat[1]+3)){			   //check length, min 3 bytes + data
          memcpy(&GS_CMD,dat,len);
