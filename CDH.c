@@ -68,7 +68,7 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
       }
       memcpy(&magData,dat,sizeof(magData));
       //sensor data recieved set event
-      ctl_events_set_clear(&mag_evt,MAG_EVT_DAT_REC,0);
+      ctl_events_set_clear(&mag_evt,MAG_EVT_COMMAND_SENSOR_READ,0);
     return RET_SUCCESS;
       
     case CMD_GS_DATA:				           //Ground Station Command
