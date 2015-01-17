@@ -177,13 +177,13 @@ int mag_sample_single(void* buf){
     return resp;
 }
 
-int mag_test_mode(void *buf){
+int mag_test_mode(void *buf,unsigned char state){
     unsigned char *ptr;
     int resp;
     //setup command
     ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
     //set command
-    *ptr++=MAG_TEST_MODE_ON;
+    *ptr++=state;
     //send packet
     resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0,BUS_I2C_SEND_FOREGROUND);
     //return response
@@ -226,7 +226,7 @@ int magCmd(char **argv,unsigned short argc){
     //set line terminator
     term=(output_type==MACHINE_OUTPUT)?"\t":"\r\n";
     //put LEDL in test mode so it sends data to CDH and not ACDS
-    mag_test_mode(buff);
+    mag_test_mode(buff,MAG_TEST_MODE_ON);
     //check result
     if(res<0){
         printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
@@ -373,6 +373,31 @@ int CDH_print_cmd(char **argv,unsigned short argc){
   return 0;
 }
 
+int mag_test_mode_Cmd(char **argv,unsigned short argc){
+  unsigned char buff[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
+  unsigned char state;
+  int res;
+  if(argc!=1){
+    printf("Error : %s requires only 1 argument\r\n",argv[0]);
+    return -1;
+  }
+
+  if(!strcmp("on",argv[1])){
+    state=MAG_TEST_MODE_ON;
+  }else if(!strcmp("off",argv[1])){
+    state=MAG_TEST_MODE_OFF;
+  }else{
+    printf("Error : unknown argument \"%s\"\r\n",argv[1]);
+    return -2;
+  }
+  res=mag_test_mode(buff,state);
+  if(res!=RET_SUCCESS){
+    printf("Error sending packet : %s\r\n",BUS_error_str(res));
+  }else{
+    printf("Command sent successfully!!\r\n");
+  }
+}
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     ARC_COMMANDS,CTL_COMMANDS,ERROR_COMMANDS,ARC_ASYNC_PROXY_COMMAND,
@@ -384,6 +409,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     {"beacon","[on|off]\r\n\t""Turn on/off status requests and beacon\r\n",beaconCmd},
                     {"mag","[all|single]...""\r\n\t""read data from magnetomiters",magCmd},
                     {"cdhp","[on|off]...""\r\n\t""turn on or off printing",CDH_print_cmd},
+                    {"tm","[on|off]""\r\n\t""Turn on or off test mode for the magnetometer",mag_test_mode_Cmd},
                    //end of list
 
                    {NULL,NULL,NULL}};
