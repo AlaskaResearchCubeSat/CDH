@@ -93,6 +93,7 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
                         system_stat.COMM_powerup++;
                         if(beacon_on){                      // If COMM cycles after deployment need to tell COMM to RF on
                           ctl_events_set_clear(&cmd_parse_evt,CMD_PARSE_RF_ON,0);
+                          ctl_events_set_clear(&cmd_parse_evt,CMD_PARSE_BEACON_ON,0);
                         }
                         return RET_SUCCESS;
                 case BUS_ADDR_IMG:  
