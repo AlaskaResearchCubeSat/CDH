@@ -398,6 +398,68 @@ int mag_test_mode_Cmd(char **argv,unsigned short argc){
   }
 }
 
+int power_Cmd(char **argv,unsigned short argc){
+  unsigned char cmd,addr;
+  unsigned char buf[BUS_I2C_HDR_LEN+0+BUS_I2C_CRC_LEN],*ptr;
+  int resp;
+  //check number of arguments
+  if(argc!=2){
+    printf("Error : %s requires 2 aruments but %i given\r\n",argv[0],argc);
+    return -1;
+  }
+  //get command
+  if(!strcmp("on",argv[1])){
+    cmd=CMD_SUB_ON;
+  }else if(!strcmp("off",argv[1])){
+    cmd=CMD_SUB_OFF;
+  }else{
+    printf("Error : unknown argument %s\r\n",argv[1]);
+    return -2;
+  }
+  //get address
+  addr=getI2C_addr(argv[2],0,busAddrSym);
+  //check if address was found
+  if(addr==0xFF){
+    return -3;
+  }
+  //setup command memory
+  ptr=BUS_cmd_init(buf,cmd);
+  //send packet
+  resp=BUS_cmd_tx(addr,buf,0,0,BUS_I2C_SEND_FOREGROUND);
+  //check result
+  if(resp!=RET_SUCCESS){
+    printf("Error sending packet : %s\r\n",BUS_error_str(resp));
+  }else{
+    printf("Command sent successfully!!\r\n");
+  }
+}
+
+int LEDLtm_Cmd(char **argv,unsigned short argc){
+  if(argc==1){
+  if(!strcmp("on",argv[1])){
+      //Turn off MOSFET to power LEDL from EPS
+      P6OUT&=~BIT6;
+      //clear interrupt pin
+      BUS_int_clear(BIT0);
+    }else if(!strcmp("off",argv[1])){
+      //Turn on MOSFET to power LEDL from EPS
+      P6OUT|=BIT6;
+      //set interrupt pin
+      BUS_int_set(BIT0);
+    }else{
+      printf("Error : unknown argument %s\r\n",argv[1]);
+      return -1;
+    }
+  }else if(argc>1){
+    printf("Error : too many arguments\r\n");
+    return -2;
+  }
+  //print status
+  printf("LEDL MOSFET : %s\r\n",(P6OUT&BIT6)?"on":"off");
+  printf("LEDL interrupt : %s\r\n",(P1DIR&BIT0)?"on":"off");
+  return 0;
+}
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     ARC_COMMANDS,CTL_COMMANDS,ERROR_COMMANDS,ARC_ASYNC_PROXY_COMMAND,
@@ -410,6 +472,8 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     {"mag","[all|single]...""\r\n\t""read data from magnetomiters",magCmd},
                     {"cdhp","[on|off]...""\r\n\t""turn on or off printing",CDH_print_cmd},
                     {"tm","[on|off]""\r\n\t""Turn on or off test mode for the magnetometer",mag_test_mode_Cmd},
+                    {"power","on|off addr""\r\n\t""Power on or off a subsystem",power_Cmd},
+                    {"LEDLtm","[on|off]""\r\n\t""Turn on/off LEDL test mode",LEDLtm_Cmd},
                    //end of list
 
                    {NULL,NULL,NULL}};
