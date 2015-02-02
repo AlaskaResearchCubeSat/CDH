@@ -288,7 +288,7 @@ void cmd_parse(void *p) __toplevel{
       // check eps status for positive power
         cdh_print("Launch = %d; USB_power = %d\r\n",launch,USB_power);
         cdh_print("Waiting for Solar Cell voltage above threshold: %d\r\n",system_stat.EPS_stat.Y_voltage);
-        if((1||system_stat.EPS_stat.Y_voltage>= minV) || (system_stat.EPS_stat.X_voltage>=minV) || (system_stat.EPS_stat.Z_voltage>=minV)){ // positive voltage detected
+        if((system_stat.EPS_stat.Y_voltage>= minV) || (system_stat.EPS_stat.X_voltage>=minV) || (system_stat.EPS_stat.Z_voltage>=minV)){ // positive voltage detected
           cdh_print("Solar Cell voltage above threshold\r\n");
           if(!launch){ //assuming we haven't been here before start the deployment timers.
             cdh_print("Set Antenna Deployment and RF ON timers\r\n");
