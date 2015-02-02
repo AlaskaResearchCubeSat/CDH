@@ -467,6 +467,27 @@ int burnCmd(char **argv,unsigned short argc){
 }
 
 
+int mode_Cmd(char **argv,unsigned short argc){
+  if(argc>1){
+    printf("Error : too many arguments\r\n");
+    return -1;
+  }
+  if(argc==1){
+    if(!strcmp("testing",argv[1])){
+      //testing mode
+      USB_power=1;
+    }else if(!strcmp("flight",argv[1])){
+      //flight mode
+      USB_power=0;
+    }else{
+      printf("Error : unknown argument \"%s\"\r\n",argv[1]);
+      return -2;
+    }
+  }
+  printf("mode = %s\r\n",USB_power?"testing":"flight");
+  return 0;
+}
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     ARC_COMMANDS,CTL_COMMANDS,ERROR_COMMANDS,ARC_ASYNC_PROXY_COMMAND,
@@ -480,6 +501,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     {"cdhp","[on|off]...""\r\n\t""turn on or off printing",CDH_print_cmd},
                     {"tm","[on|off]""\r\n\t""Turn on or off test mode for the magnetometer",mag_test_mode_Cmd},
                     {"burn","[time [delay]]""\r\n\t""trigger the burn circuit to deploy the antenna for [time] in secconds",burnCmd},
+                    {"mode","[testing|flight]""\r\n\t""Set/get orbit or flight mode",mode_Cmd},
                    //end of list
 
                    {NULL,NULL,NULL}};
