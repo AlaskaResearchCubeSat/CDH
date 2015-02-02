@@ -262,6 +262,15 @@ void cmd_parse(void *p) __toplevel{
         PrintBuffer(system_stat.IMG_stat, sizeof(system_stat.IMG_stat));
         cdh_print("0x%02X ",system_stat.EPS_addr);
         PrintBuffer((char*)&system_stat.EPS_stat, sizeof(system_stat.EPS_stat));
+        
+        if(system_stat.flags&STAT_EPS_VALID){
+          //print solar cell voltages for testing
+          cdh_print("\r\n=================================================\r\nSolar Cell voltages:\r\n");
+          cdh_print("\tX-voltage = %u\r\n",system_stat.EPS_stat.X_voltage);
+          cdh_print("\tY-voltage = %u\r\n",system_stat.EPS_stat.Y_voltage);
+          cdh_print("\tZ-voltage = %u\r\n",system_stat.EPS_stat.Z_voltage);
+          cdh_print("=================================================\r\n\r\n");
+        }
 
         if((system_stat.flags&STAT_ALL_VALID)==STAT_ALL_VALID){
           cdh_print("All subsystems reported status\r\n");
@@ -287,7 +296,10 @@ void cmd_parse(void *p) __toplevel{
       } else { // beacon_on = FALSE start_up routine
       // check eps status for positive power
         cdh_print("Launch = %d; USB_power = %d\r\n",launch,USB_power);
-        cdh_print("Waiting for Solar Cell voltage above threshold: %d\r\n",system_stat.EPS_stat.Y_voltage);
+        cdh_print("Waiting for Solar Cell voltage above threshold: \r\n");
+        cdh_print("\tSolar Cell X-voltage = %u\r\n",system_stat.EPS_stat.X_voltage);
+        cdh_print("\tSolar Cell Y-voltage = %u\r\n",system_stat.EPS_stat.Y_voltage);
+        cdh_print("\tSolar Cell Z-voltage = %u\r\n",system_stat.EPS_stat.Z_voltage);
         if((system_stat.EPS_stat.Y_voltage>= minV) || (system_stat.EPS_stat.X_voltage>=minV) || (system_stat.EPS_stat.Z_voltage>=minV)){ // positive voltage detected
           cdh_print("Solar Cell voltage above threshold\r\n");
           if(!launch){ //assuming we haven't been here before start the deployment timers.
