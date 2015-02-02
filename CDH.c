@@ -12,6 +12,7 @@
 CTL_EVENT_SET_t cmd_parse_evt;
 
 short beacon_on=0;
+short USB_power=0;
 char GS_CMD[30];
 
 STAT_PACKET system_stat;
@@ -32,7 +33,7 @@ void task_tick(void) __ctl_interrupt[TIMERA1_VECTOR]{
     case TAIV_TAIFG:
  //     ctl_events_set_clear(&cmd_parse_evt,CMD_PARSE_GET_STAT,0);
       sec+=2;
-      P7OUT^=BIT7; //toggle bit 7
+//      P7OUT^=BIT7; //toggle bit 7
 //      ctl_events_set_clear(&cmd_parse_evt,CMD_PARSE_SEND_STAT,0);
       if(sec==8){
         //collect status
@@ -163,7 +164,7 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
   return ERR_UNKNOWN_CMD;
 }
 
-int CDH_print=0;
+int CDH_print=1;
 
 void cdh_print(const char *fmt,...){
   va_list args;
@@ -191,6 +192,8 @@ void cmd_parse(void *p) __toplevel{
   system_stat.COMM_addr=BUS_ADDR_COMM;
   system_stat.IMG_addr=BUS_ADDR_IMG;
   system_stat.EPS_addr=0x16;
+
+  USB_power = USB_power_check();
 
   cdh_print("Turn on LEDL NMOS P6.6\r\n");
   //Turn on MOSFET to power LEDL from EPS
@@ -227,11 +230,11 @@ void cmd_parse(void *p) __toplevel{
     }
 
     if((e&CMD_PARSE_SEND_STAT) || e&CMD_PARSE_SEND_STAT_CMD){
-	// if beacon_on true send data to comm
+    // if beacon_on true send data to comm
     // if beacon_on false check eps for positive power set time counter for antenna deployment and beacon_on
       if(beacon_on){							// beacon_on = true, Send data to COMM
         cdh_print("Sending status\r\n");
-        system_stat.type=SPI_BEACON_DAT;                        // Type = SPI_BEACON_DAT
+        system_stat.type=SPI_BEACON_DAT;        // Type = SPI_BEACON_DAT
         time=get_ticker_time();					//get time for beacon
         system_stat.time0=time>>24;				//write time into status
         system_stat.time1=time>>16;
@@ -283,8 +286,9 @@ void cmd_parse(void *p) __toplevel{
 		
       } else { // beacon_on = FALSE start_up routine
       // check eps status for positive power
+        cdh_print("Launch = %d; USB_power = %d\r\n",launch,USB_power);
         cdh_print("Waiting for Solar Cell voltage above threshold: %d\r\n",system_stat.EPS_stat.Y_voltage);
-        if((system_stat.EPS_stat.Y_voltage>= minV) || (system_stat.EPS_stat.X_voltage>=minV) || (system_stat.EPS_stat.Z_voltage>=minV)){ // positive voltage detected
+        if((1||system_stat.EPS_stat.Y_voltage>= minV) || (system_stat.EPS_stat.X_voltage>=minV) || (system_stat.EPS_stat.Z_voltage>=minV)){ // positive voltage detected
           cdh_print("Solar Cell voltage above threshold\r\n");
           if(!launch){ //assuming we haven't been here before start the deployment timers.
             cdh_print("Set Antenna Deployment and RF ON timers\r\n");
@@ -292,31 +296,38 @@ void cmd_parse(void *p) __toplevel{
             BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+RFONTime,&cmd_parse_evt,CMD_PARSE_RF_ON);
             launch=1;
           }
-         // if eps does have positive power, turn on ledl, send interrupt to ledl that eps has power
-         // command on ? ledl and acds
         }
-
-       }
+      }
     }
 
     if(e&CMD_PARSE_ANTENNA_DEPLOY){
       cdh_print("Deploy antenna\r");
-      // set timer to wait for antenna deployment (30 min?)
-      // when antenna deployment timer times out deploy antenna
+      if(!USB_power){
+           burn_on();
+          //delay for specified time
+          ctl_timeout_wait(ctl_get_current_time()+BURN_DELAY);
+          //turn off resistor
+          burn_off();
+          //Deploy the antenna only if the USB_power is not on!
+          //Deployment should happen 10+ minutes after launch. P6.7
+      } else cdh_print("USB power do not deploy.\r\n");
+
     }
 
     if(e&CMD_PARSE_RF_ON){                          // TURN ON HELLO MESSAGE IN BEACON
       cdh_print("Turn Beacon ON\r");
       // when timer times out send on command to comm, set beacon_on = 1;
-      ptr=BUS_cmd_init(buff,CMD_SUB_ON);
-      resp=BUS_cmd_tx(BUS_ADDR_COMM,buff,0,0,BUS_I2C_SEND_FOREGROUND);
-      if(resp!=RET_SUCCESS){
-          cdh_print("Failed to send POWER ON to COMM %s\r\n",BUS_error_str(resp));
-      }
       beacon_on = 1;
-      resp=BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+BeaconONTime,&cmd_parse_evt,CMD_PARSE_BEACON_ON);
-      if(resp!=RET_SUCCESS){
+      if(!USB_power){
+        ptr=BUS_cmd_init(buff,CMD_SUB_ON);
+        resp=BUS_cmd_tx(BUS_ADDR_COMM,buff,0,0,BUS_I2C_SEND_FOREGROUND);
+        if(resp!=RET_SUCCESS){
+          cdh_print("Failed to send POWER ON to COMM %s\r\n",BUS_error_str(resp));
+        }
+        resp=BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+BeaconONTime,&cmd_parse_evt,CMD_PARSE_BEACON_ON);
+        if(resp!=RET_SUCCESS){
           cdh_print("Failed to set STATUS ON Alarm %s\r\n",BUS_error_str(resp));
+        }  
       }
     }
 
@@ -415,3 +426,24 @@ void PrintBuffer(char *dat, unsigned int len){
     }
     cdh_print("\r\n");
 }
+
+short USB_power_check(void){
+  cdh_print("Check to see if powered by USB\r\n");
+  return !(P1IN & BIT1);
+//  return 0; //test
+}
+
+void burn_on(void){
+    //turn on LED
+    P7OUT|=BIT7;
+    //turn on resistor
+    P6OUT|=BIT7;
+}
+
+void burn_off(void){
+    //turn off resistor
+    P6OUT&=~BIT7;
+    //turn off LED
+    P7OUT&=~BIT7;
+}
+

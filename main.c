@@ -53,6 +53,11 @@ int main(void){
   P7DIR = 0xFF;
   P7SEL = 0;
 
+  //Set-up P6 I/O output;
+  P6OUT = 0;
+  P6DIR = 0xFF;
+  P6SEL = 0;
+
   //initialize stacks
   memset(stack1, 0xcd, sizeof(stack1));  // write known values into the stack
   stack1[0]=stack1[sizeof(stack1)/sizeof(stack1[0])-1]=0xfeed; // put marker values at the words before/after the stack

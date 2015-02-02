@@ -53,16 +53,20 @@ enum{CMD_PARSE_GET_STAT_CMD=1<<0,CMD_PARSE_SEND_STAT_CMD=1<<1,CMD_PARSE_SPI_CLEA
 #define CMD_PARSE_ALL (CMD_PARSE_GET_STAT_CMD|CMD_PARSE_SEND_STAT_CMD|CMD_PARSE_SPI_CLEAR|CMD_PARSE_GET_STAT|CMD_PARSE_SEND_STAT|CMD_PARSE_ANTENNA_DEPLOY|CMD_PARSE_RF_ON|CMD_PARSE_BEACON_ON|CMD_PARSE_GS_CMD)
 
 //#define minV 200
-//#define DeployAntennaTime 0x001C2000  // 30 min = 30*60*1024
-//#define RFONTime 0x002A3000           //45 min = 45*60*1024
+//#define DeployAntennaTime       (10ul*60ul*1024ul) //10 minutes
+//#define RFONTime                (24ul*60ul*1024ul) //45 min = 45*60*1024
+//#define BeasonONTime            (7ul*24ul*60ul*60ul*1024ul) //1 week
+#define BURN_DELAY                (10ul*1024ul)  //10 sec
 
 //FOR TESTING
 #define minV 40
-#define DeployAntennaTime         (20ul*1024ul)   // 20 sec
+#define DeployAntennaTime         (20ul*1024ul)   //20 sec
 #define RFONTime                  (30ul*1024ul)   //30 sec
 #define BeaconONTime              (5ul*60ul*1024ul) //5 min = 5*60*1024 after RFONTime
 
+
 extern short beacon_on;
+extern short USB_power;
 
 extern int CDH_print;
 
@@ -71,5 +75,8 @@ extern char GS_CMD[30];
 
 void CDH_timer_setup(void);
 void PrintBuffer(char *dat, unsigned int len);
+short USB_power_check(void);
+void burn_on(void);
+void burn_off(void);
 
 #endif
