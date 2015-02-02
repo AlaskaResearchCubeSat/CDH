@@ -11,6 +11,7 @@
 #include <commandLib.h>
 #include "CDH.h"
 #include <Error.h>
+#include <math.h>
 #include "CDH_errors.h"
 #include "mag.h"
 
@@ -398,6 +399,74 @@ int mag_test_mode_Cmd(char **argv,unsigned short argc){
   }
 }
 
+
+int burnCmd(char **argv,unsigned short argc){
+    float burn_time=1,wait_time=0;
+    unsigned long burn_delay,wait_delay;
+    char *end;
+    if(argc!=0){
+        if(argc>2){
+            printf("Error : too many arguments\r\n");
+            return -1;
+        }
+        if(argc>=2){
+            wait_time=strtof(argv[2],&end);
+            //check result
+            if(!isfinite(wait_time)){
+                printf("Error : failed to read time \"%s\" %f returned\r\n",argv[2],wait_time);
+                return -2;
+            }
+            //check for extra chars
+            if(*end!=NULL){
+                printf("Error : unknown suffix \"%s\" while parsing \"%s\" \r\n",end,argv[2]);
+                return -3;
+            }
+        }
+        burn_time=strtof(argv[1],&end);
+        //check result
+        if(!isfinite(burn_time)){
+            printf("Error : failed to read time \"%s\" %f returned\r\n",argv[1],burn_time);
+            return -2;
+        }
+        //check for extra chars
+        if(*end!=NULL){
+            printf("Error : unknown suffix \"%s\" while parsing \"%s\" \r\n",end,argv[1]);
+            return -3;
+        }
+    }
+    //check if we need to wait
+    if(wait_time>10*1/1024.0){
+        //calculate delay
+        wait_delay=(wait_time*1024)+0.5;
+        //recalculate time
+        wait_time=wait_delay/1024;
+        //print message with time
+        printf("Waiting %.0fs before burn\r\n",wait_time);
+        //wait
+        ctl_timeout_wait(ctl_get_current_time()+wait_delay);
+    }
+    //calculate delay in clocks
+    burn_delay=(burn_time*1024)+0.5;
+    //check if delay is too short
+    if(burn_delay<3){
+        burn_delay=3;
+    }
+    //recalculate time
+    burn_time=burn_delay/1024.0;
+    //print out delay time
+    printf("Activating burn circuit for %.1f secconds\r\n",burn_time);
+    //turn on resistor
+    burn_on();
+    //delay for specified time
+    ctl_timeout_wait(ctl_get_current_time()+burn_delay);
+    //turn off resistor
+    burn_off();
+    //print completion message
+    printf("Burn Activation complete!\r\n");
+    return 0;
+}
+
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     ARC_COMMANDS,CTL_COMMANDS,ERROR_COMMANDS,ARC_ASYNC_PROXY_COMMAND,
@@ -410,6 +479,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     {"mag","[all|single]...""\r\n\t""read data from magnetomiters",magCmd},
                     {"cdhp","[on|off]...""\r\n\t""turn on or off printing",CDH_print_cmd},
                     {"tm","[on|off]""\r\n\t""Turn on or off test mode for the magnetometer",mag_test_mode_Cmd},
+                    {"burn","[time [delay]]""\r\n\t""trigger the burn circuit to deploy the antenna for [time] in secconds",burnCmd},
                    //end of list
 
                    {NULL,NULL,NULL}};
