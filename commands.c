@@ -552,7 +552,7 @@ int LEDLtm_Cmd(char **argv,unsigned short argc){
 
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
-                    ARC_COMMANDS,CTL_COMMANDS,ERROR_COMMANDS,ARC_ASYNC_PROXY_COMMAND,
+                    ARC_COMMANDS,CTL_COMMANDS,ERROR_COMMANDS,ARC_ASYNC_PROXY_COMMAND,ARC_SPI_DREAD,
                     {"reset","\r\n\t""Reset the MSP430",resetCmd},
                     {"OnCDH","[bgnd|stop]\r\n\t""Command ON CDH",onCmd},
                     {"OffCDH","port [port ...]\r\n\t""Command OFF CDH",offCmd},
