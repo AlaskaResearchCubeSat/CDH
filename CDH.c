@@ -193,6 +193,8 @@ void cmd_parse(void *p) __toplevel{
   system_stat.IMG_addr=BUS_ADDR_IMG;
   system_stat.EPS_addr=0x16;
 
+
+  cdh_print("Check to see if powered by USB\r\n");
   USB_power = USB_power_check();
 
   cdh_print("Turn on LEDL NMOS P6.6\r\n");
@@ -441,8 +443,8 @@ void PrintBuffer(char *dat, unsigned int len){
     cdh_print("\r\n");
 }
 
+//return nonzero if USB power is applied
 short USB_power_check(void){
-  cdh_print("Check to see if powered by USB\r\n");
   return !(P1IN & BIT1);
 //  return 0; //test
 }
