@@ -53,17 +53,17 @@ enum{CMD_PARSE_GET_STAT_CMD=1<<0,CMD_PARSE_SEND_STAT_CMD=1<<1,CMD_PARSE_SPI_CLEA
 #define CMD_PARSE_ALL (CMD_PARSE_GET_STAT_CMD|CMD_PARSE_SEND_STAT_CMD|CMD_PARSE_SPI_CLEAR|CMD_PARSE_GET_STAT|CMD_PARSE_SEND_STAT|CMD_PARSE_ANTENNA_DEPLOY|CMD_PARSE_RF_ON|CMD_PARSE_BEACON_ON|CMD_PARSE_GS_CMD)
 
 
-//#define SOLAR_THRESHOLD         (750)
-//#define ANT_DEPLOY_TIME         (10ul*60ul*1024ul) //10 minutes
-//#define RF_ON_TIME              (24ul*60ul*1024ul) //45 min = 45*60*1024
-//#define BEACON_ON_TIME          (7ul*24ul*60ul*60ul*1024ul) //1 week
+#define SOLAR_THRESHOLD         (750)
+#define ANT_DEPLOY_TIME         (10ul*60ul*1024ul) //10 minutes
+#define RF_ON_TIME              (24ul*60ul*1024ul) //45 min = 45*60*1024
+#define BEACON_ON_TIME          (7ul*24ul*60ul*60ul*1024ul) //1 week
 #define BURN_DELAY              (10ul*1024ul)  //10 sec
 
 //FOR TESTING
-#define SOLAR_THRESHOLD         (750)
-#define ANT_DEPLOY_TIME         (20ul*1024ul)   //20 sec
-#define RF_ON_TIME              (30ul*1024ul)   //30 sec
-#define BEACON_ON_TIME          (5ul*60ul*1024ul) //5 min = 5*60*1024 after RFONTime
+//#define SOLAR_THRESHOLD         (750)
+//#define ANT_DEPLOY_TIME         (20ul*1024ul)   //20 sec
+//#define RF_ON_TIME              (30ul*1024ul)   //30 sec
+//#define BEACON_ON_TIME          (5ul*60ul*1024ul) //5 min = 5*60*1024 after RFONTime
 
 
 extern short beacon_on;
