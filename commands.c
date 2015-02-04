@@ -676,6 +676,85 @@ int EPS_cmd(char **argv,unsigned short argc){
   return 0;
 }
 
+//reset pins for subsystems
+enum  {COMM_RST_PIN=BIT0,LEDL_RST_PIN=BIT1,ACDS_RST_PIN=BIT2,IMG_RST_PIN=BIT3};
+
+int hard_reset_Cmd(char **argv,unsigned short argc){
+  int i,hold=0;
+  unsigned long num;
+  char *end;
+  char reset=0;
+  if(argc==0){
+    printf("Error : %s requires one or more arguments\r\n",argv[0]);
+    return -1;
+  }
+  for(i=1;i<=argc;i++){
+    if(!strcmp(argv[i],"hold")){
+      hold=1;
+    }else if(!strcmp(argv[i],"LEDL")){
+      //set LEDL reset pin
+      reset|=LEDL_RST_PIN;
+    }else if(!strcmp(argv[i],"ACDS")){
+      //set LEDL reset pin
+      reset|=ACDS_RST_PIN;
+    }else if(!strcmp(argv[i],"COMM")){
+      //set LEDL reset pin
+      reset|=COMM_RST_PIN;
+    }else if(!strcmp(argv[i],"IMG")){
+      //set LEDL reset pin
+      reset|=IMG_RST_PIN;
+    }else if(!strcmp(argv[i],"all")){
+      //set all reset pins
+      reset|=LEDL_RST_PIN|ACDS_RST_PIN|COMM_RST_PIN|IMG_RST_PIN;
+    }else{
+      //attempt to parse numeric value
+      num=strtoul(argv[i],&end,0);
+      //check if anything worked
+      if(end==argv[i]){
+        printf("Error : unknown argument %s\r\n",argv[i]);
+        return -3;
+      }
+      //check for second argument
+      if(argc!=2){
+        printf("Error : numeric commands require 2 arguments\r\n");
+        return -7;
+      }
+      //check for suffix
+      if(*end!='\0'){
+        printf("Error : unknown suffix \"%s\" for \"%s\"\r\n",end,argv[i]);
+        return -5;
+      }
+      //check range
+      if(num>0xFF){
+        printf("Error : argument %lu is too large\r\n",num);
+        return -6;
+      }
+      //add value in value
+      reset|=num;
+    }
+  }
+  //print out value
+  printf("Setting pins 0x%02X\r\n",reset);
+  //set correct output values
+  P8OUT=
+  //set pins to output
+  P8DIR|=reset;
+  //check if holding
+  if(hold){
+    printf("Reset Active press any key to stop\r\n");
+    //wait for keypres
+    getchar();
+  }else{
+    //wait 100ms for reset to happen
+    ctl_timeout_wait(ctl_get_current_time()+100);
+  }
+  //set pins back to input
+  P8DIR&=~reset;
+  //print message
+  printf("Reset Complete\r\n");
+  //done
+  return 0;
+}
 
 
 //table of commands with help
@@ -695,6 +774,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     {"power","on|off addr""\r\n\t""Power on or off a subsystem",power_Cmd},
                     {"LEDLtm","[on|off]""\r\n\t""Turn on/off LEDL test mode",LEDLtm_Cmd},
                     {"eps","[cmd] [value]""\r\n\t""Send commands to the EPS",EPS_cmd},
+                    {"hreset","\r\n\t""hard reset a given system",hard_reset_Cmd},
                    //end of list
 
                    {NULL,NULL,NULL}};
