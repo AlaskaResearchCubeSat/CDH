@@ -308,8 +308,8 @@ void cmd_parse(void *p) __toplevel{
           cdh_print("Solar Cell voltage above threshold\r\n");
           if(!launch){ //assuming we haven't been here before start the deployment timers.
             cdh_print("Set Antenna Deployment and RF ON timers\r\n");
-            BUS_set_alarm(BUS_ALARM_0,get_ticker_time()+DeployAntennaTime,&cmd_parse_evt,CMD_PARSE_ANTENNA_DEPLOY);
-            BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+RFONTime,&cmd_parse_evt,CMD_PARSE_RF_ON);
+            BUS_set_alarm(BUS_ALARM_0,get_ticker_time()+ANT_DEPLOY_TIME,&cmd_parse_evt,CMD_PARSE_ANTENNA_DEPLOY);
+            BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+RF_ON_TIME,&cmd_parse_evt,CMD_PARSE_RF_ON);
             launch=1;
           }
         }
@@ -340,7 +340,7 @@ void cmd_parse(void *p) __toplevel{
         if(resp!=RET_SUCCESS){
           cdh_print("Failed to send POWER ON to COMM %s\r\n",BUS_error_str(resp));
         }
-        resp=BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+BeaconONTime,&cmd_parse_evt,CMD_PARSE_BEACON_ON);
+        resp=BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+BEACON_ON_TIME,&cmd_parse_evt,CMD_PARSE_BEACON_ON);
         if(resp!=RET_SUCCESS){
           cdh_print("Failed to set STATUS ON Alarm %s\r\n",BUS_error_str(resp));
         }  
