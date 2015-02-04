@@ -303,7 +303,7 @@ void cmd_parse(void *p) __toplevel{
         cdh_print("\tSolar Cell Y-voltage = %u\r\n",system_stat.EPS_stat.Y_voltage);
         cdh_print("\tSolar Cell Z-voltage = %u\r\n",system_stat.EPS_stat.Z_voltage);
         if((system_stat.EPS_stat.X_voltage<= SOLAR_THRESHOLD) ||
-           (system_stat.EPS_stat.Y_voltage<= SOLAR_THRESHOLD) || 
+           (system_stat.EPS_stat.Y_voltage<= SOLAR_THRESHOLD && !USB_power_check()) ||        //Y BCR gets USB voltage, ignore if USB is connected
            (system_stat.EPS_stat.Z_voltage<= SOLAR_THRESHOLD)){ // positive voltage detected
           cdh_print("Solar Cell voltage above threshold\r\n");
           if(!launch){ //assuming we haven't been here before start the deployment timers.
