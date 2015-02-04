@@ -550,6 +550,134 @@ int LEDLtm_Cmd(char **argv,unsigned short argc){
   return 0;
 }
 
+//EPS commands
+enum{EPS_ADC_CMD=0,EPS_STAT_CMD=1,EPS_PDM_OFF_CMD=2,EPS_VERSION_CMD=4,EPS_HEATER_CMD=5,EPS_WATCHDOG_CMD=128};
+
+int EPS_cmd(char **argv,unsigned short argc){
+  unsigned char addr,chan,pdm,heat;
+  unsigned char buf[BUS_I2C_HDR_LEN+2+BUS_I2C_CRC_LEN],*ptr;
+  unsigned long num;
+  char *end;
+  int res,i;
+  unsigned short val;
+  if(argc<1){
+    printf("Error : %s requires at least 1 argument\r\n");
+    return -1;
+  }
+  //setup packet 
+  ptr=BUS_cmd_init(buf,CMD_EPS_SEND);
+  if(!strcmp(argv[1],"pdm")){
+    for(i=2,pdm=0;i<=argc;i++){
+      if(!strcmp(argv[i],"3.3V")){
+        //reset 3.3V rail
+        pdm|=BIT2;
+      }else if(!strcmp(argv[i],"5V")){
+        //reset 5V rail
+        pdm|=BIT1;
+      }else if(!strcmp(argv[i],"vbat")){
+        //reset battery bus rail
+        pdm|=BIT0;
+      }else{
+        printf("Error : unknown bus \"%s\"\r\n",argv[i]);
+        return -7;
+      }
+    }
+    //create packet
+    ptr[0]=EPS_PDM_OFF_CMD;
+    ptr[1]=pdm;
+    //print message
+    printf("Sending PDM off command with 0x%02X\r\n",pdm);
+  }else if(!strcmp(argv[1],"heater")){
+    if(argc!=2){
+      printf("Error : %s command %s requires 2 arguments but %i given\r\n",argv[0],argv[1],argc);
+      return -1;
+    }
+    if(!strcmp(argv[1],"off")){
+      //turn heater off
+      heat=0x01;
+    }else if(!strcmp(argv[1],"on")){
+      //turn heater on
+      heat=0x00;
+    }else{
+      printf("Error : unknown heater value \"%\"\r\n",argv[1]);
+      return -5;
+    }
+    //create packet
+    ptr[0]=EPS_HEATER_CMD;
+    ptr[1]=heat;
+    //print message
+    printf("Sending heater %s command\r\n",heat?"off":"on");
+  }else if(!strcmp(argv[1],"wdt")){
+    if(argc!=2){
+      printf("Error : %s command %s requires 1 arguments but %i given\r\n",argv[0],argv[1],argc);
+      return -1;
+    }
+    //create packet
+    ptr[0]=EPS_WATCHDOG_CMD;
+    ptr[1]=0;
+    //print message
+    printf("Sending watchdog command\r\n");
+  }else{
+    //attempt to parse numeric value
+    num=strtoul(argv[1],&end,0);
+    //check if anything worked
+    if(end==argv[1]){
+      printf("Error : unknown command %s\r\n",argv[1]);
+      return -3;
+    }
+    //check for second argument
+    if(argc!=2){
+      printf("Error : numeric commands require 2 arguments\r\n");
+      return -7;
+    }
+    //check for suffix
+    if(*end!='\0'){
+      printf("Error : unknown suffix \"%s\" for \"%s\"\r\n",end,argv[1]);
+      return -5;
+    }
+    //check range
+    if(num>0xFF){
+      printf("Error : argument %lu is too large\r\n",num);
+      return -6;
+    }
+    //store in packet
+    ptr[0]=num;
+    //parse argument
+    num=strtoul(argv[2],&end,0);
+    //check if anything worked
+    if(end==argv[1]){
+      printf("Error : could not parse argument \"%s\"\r\n",argv[2]);
+      return -3;
+    }
+    //check for suffix
+    if(*end!='\0'){
+      printf("Error : unknown suffix \"%s\" for \"%s\"\r\n",end,argv[2]);
+      return -5;
+    }
+    //check range
+    if(num>0xFF){
+      printf("Error : argument %lu is too large\r\n",num);
+      return -6;
+    }
+    //store in packet
+    ptr[1]=num;
+    //print sending info
+    printf("Sending 0x%02X, 0x%02X\r\n",ptr[0],ptr[1]);
+    //send
+  }   
+  res=BUS_cmd_tx(BUS_ADDR_LEDL,buf,2,0,BUS_I2C_SEND_FOREGROUND);
+  //check result
+  if(res!=RET_SUCCESS){
+    printf("Error sending command : %s\r\n",BUS_error_str(res));
+    return 2;
+  }
+  //print success
+  printf("Request sent successfully\r\n");
+  return 0;
+}
+
+
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     ARC_COMMANDS,CTL_COMMANDS,ERROR_COMMANDS,ARC_ASYNC_PROXY_COMMAND,ARC_SPI_DREAD,
@@ -566,6 +694,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]",helpCmd},
                     {"mode","[testing|flight]""\r\n\t""Set/get orbit or flight mode",mode_Cmd},
                     {"power","on|off addr""\r\n\t""Power on or off a subsystem",power_Cmd},
                     {"LEDLtm","[on|off]""\r\n\t""Turn on/off LEDL test mode",LEDLtm_Cmd},
+                    {"eps","[cmd] [value]""\r\n\t""Send commands to the EPS",EPS_cmd},
                    //end of list
 
                    {NULL,NULL,NULL}};
