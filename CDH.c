@@ -17,6 +17,22 @@ char GS_CMD[30];
 
 STAT_PACKET system_stat;
 
+
+int CDH_print=1;
+
+void cdh_print(const char *fmt,...){
+  va_list args;
+  if(CDH_print){
+    //initialize va_list
+    va_start(args,fmt);
+    //call printf
+    vprintf(fmt,args);
+    //cleanup va_list
+    va_end(args);
+  }
+}
+
+
 void CDH_timer_setup(void){
   //enable 2 sec interrupt
   TACTL|=TAIE;
@@ -58,7 +74,8 @@ MAG_DAT magData;
 //handle subsystem specific commands //called by the main ARCbus task don't linger here
 int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned short len){
   int i;
-  
+  static unsigned char buff[BUS_I2C_HDR_LEN+BUS_I2C_CRC_LEN],*ptr;
+  int resp;
   switch(cmd){
     case CMD_MAG_DATA:
       //check packet length
@@ -89,6 +106,12 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
                         return RET_SUCCESS;
                 case BUS_ADDR_ACDS: 
                         system_stat.ACDS_powerup++;
+                        //power up the ACDS board
+                        ptr=BUS_cmd_init(buff,CMD_SUB_ON);
+                        resp=BUS_cmd_tx(BUS_ADDR_ACDS,buff,0,0,BUS_I2C_SEND_FOREGROUND);
+                        if(resp!=RET_SUCCESS){
+                          cdh_print("Failed to send POWER ON to ACDS %s\r\n",BUS_error_str(resp));
+                        }
                         return RET_SUCCESS;
                 case BUS_ADDR_COMM: 
                         system_stat.COMM_powerup++;
@@ -164,24 +187,10 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
   return ERR_UNKNOWN_CMD;
 }
 
-int CDH_print=1;
-
-void cdh_print(const char *fmt,...){
-  va_list args;
-  if(CDH_print){
-    //initialize va_list
-    va_start(args,fmt);
-    //call printf
-    vprintf(fmt,args);
-    //cleanup va_list
-    va_end(args);
-  }
-}
-
 // this is where the work happens
 void cmd_parse(void *p) __toplevel{
   unsigned int e, launch=0;
-  static unsigned char buff[128];
+  static unsigned char buff[BUS_I2C_HDR_LEN+10+BUS_I2C_CRC_LEN];
   unsigned char *ptr;
   ticker time;
   int resp,i;
@@ -310,6 +319,12 @@ void cmd_parse(void *p) __toplevel{
             cdh_print("Set Antenna Deployment and RF ON timers\r\n");
             BUS_set_alarm(BUS_ALARM_0,get_ticker_time()+ANT_DEPLOY_TIME,&cmd_parse_evt,CMD_PARSE_ANTENNA_DEPLOY);
             BUS_set_alarm(BUS_ALARM_1,get_ticker_time()+RF_ON_TIME,&cmd_parse_evt,CMD_PARSE_RF_ON);
+            //power up the ACDS board
+            ptr=BUS_cmd_init(buff,CMD_SUB_ON);
+            resp=BUS_cmd_tx(BUS_ADDR_ACDS,buff,0,0,BUS_I2C_SEND_FOREGROUND);
+            if(resp!=RET_SUCCESS){
+              cdh_print("Failed to send POWER ON to ACDS %s\r\n",BUS_error_str(resp));
+            }
             launch=1;
           }
         }
