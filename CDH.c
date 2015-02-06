@@ -193,7 +193,7 @@ void cmd_parse(void *p) __toplevel{
   static unsigned char buff[BUS_I2C_HDR_LEN+10+BUS_I2C_CRC_LEN];
   unsigned char *ptr;
   ticker time;
-  int resp,i;
+  int resp,i,error_count=0;
   system_stat.type = SPI_BEACON_DAT;
   system_stat.CDH_addr=BUS_ADDR_CDH;
   system_stat.LEDL_addr=BUS_ADDR_LEDL;
@@ -237,6 +237,35 @@ void cmd_parse(void *p) __toplevel{
       if(resp!=RET_SUCCESS){
         //Print error
         cdh_print("Error sending status %s\r\n",BUS_error_str(resp));
+        //count errors
+        error_count++;
+      }else{
+        error_count=0;
+      }
+      if(error_count==5){
+        cdh_print("Failed to send status too many times attempting soft reset\r\n");
+        //send reset command
+        BUS_cmd_init(buff,CMD_RESET);
+        resp=BUS_cmd_tx(BUS_ADDR_GC,buff,0,0,BUS_I2C_SEND_FOREGROUND);
+        //check for error
+        if(resp!=RET_SUCCESS){
+          cdh_print("Soft reset failed, attempting hard reset\r\n");
+          //Do a hard reset of systems
+          //set correct output values
+          P8OUT=LEDL_RST_PIN;   //LEDL is high all others are low
+          //set pins to output
+          P8DIR|=ALL_RST_PIN;
+          //check if holding
+          //wait 100ms for reset to happen
+          ctl_timeout_wait(ctl_get_current_time()+100);
+          //set pins back to input
+          P8DIR&=~ALL_RST_PIN;
+        }
+      }
+      if(error_count>7){
+         cdh_print("Failed to send status too many times resetting CDH\r\n");
+         //reset CDH
+         reset(ERR_LEV_ERROR,ERR_SRC_STAT,ERROR_TOO_MANY_ERRORS,0);
       }
     }
 

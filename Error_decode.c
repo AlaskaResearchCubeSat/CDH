@@ -17,6 +17,12 @@ char *err_decode(char buf[150], unsigned short source,int err, unsigned short ar
             return buf;
         }
     break;         
+    case ERR_SRC_STAT:
+      switch(err){
+        case ERROR_TOO_MANY_ERRORS:
+          return "Status : Too many errors";
+      }
+    break;
   }
   sprintf(buf,"source = %i, error = %i, argument = %i",source,err,argument);
   return buf;
