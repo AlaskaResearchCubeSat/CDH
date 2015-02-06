@@ -49,8 +49,7 @@ int main(void){
   initARCbus(BUS_ADDR_CDH);
 
   //Set-up P7 I/O output
-  //P7OUT = BUS_ADDR_CDH;
-  P7OUT = 0;
+  P7OUT = BUS_ADDR_CDH;
   P7DIR = 0xFF;
   P7SEL = 0;
 

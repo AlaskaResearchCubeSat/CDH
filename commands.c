@@ -58,7 +58,7 @@ int statCmd(char **argv,unsigned short argc){
 int onCmd(char *argv[],unsigned short argc){
   //output lower four bits CDH address (Ox15) to P7 LED's
 
-  //P7OUT=BIT2|BIT0;
+  P7OUT=BIT2|BIT0;
 
   //Perhaps should set a register here that says we are commanded on.
   
@@ -80,16 +80,16 @@ int statusCmd(char *argv[],unsigned short argc){
 
   int i;
    //flash lower four bits CDH address (Ox15) to P7 LED's 10 times
-   //P7OUT=BIT2|BIT0;
+   P7OUT=BIT2|BIT0;
    for (i=0;i<10;i++){
 	ctl_timeout_wait(ctl_get_current_time()+102);
 	P7OUT=~(BIT2|BIT0);
 	ctl_timeout_wait(ctl_get_current_time()+102);
-	//P7OUT=(BIT2|BIT0);
+	P7OUT=(BIT2|BIT0);
    }
   //Need to send back status through terminal.
   
-  //P7OUT=BIT2|BIT0; //finish present CDH address
+  P7OUT=BIT2|BIT0; //finish present CDH address
   printf("CDH On.  Check LEDs: flashing 0bxxxx0101 - 0bxxxx1010\r\n");
 }
 

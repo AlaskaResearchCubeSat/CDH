@@ -58,7 +58,7 @@ void task_tick(void) __ctl_interrupt[TIMERA1_VECTOR]{
         system_stat.flags=0;
       }
       if(sec>=10){
-      //P7OUT^=BIT5; //toggle bit 5
+      P7OUT^=BIT5; //toggle bit 5
         sec=0;
         //send status
         ctl_events_set_clear(&cmd_parse_evt,CMD_PARSE_SEND_STAT,0);
@@ -496,7 +496,7 @@ short USB_power_check(void){
 
 void burn_on(void){
     //turn on LED
-    //P7OUT|=BIT7;
+    P7OUT|=BIT7;
     //turn on resistor
     P6OUT|=BIT7;
 }
