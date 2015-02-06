@@ -17,7 +17,7 @@
     <configuration Name="Debug" linker_additional_files="z:/Software/lib/BUSlib_Debug_CDH.hza;z:/Software/lib/Error_printf_Debug.hza;z:/Software/lib/termlib_Debug.hza;z:/Software/lib/UART_UCA1_Debug.hza;z:/Software/lib/commandLib_Debug.hza;z:/Software/lib/SD-lib_UCA1_Debug.hza"/>
     <configuration Name="Release" linker_additional_files="z:/Software/lib/BUSlib_Release_CDH.hza;z:/Software/lib/Error_printf_Release.hza;z:/Software/lib/termlib_Release.hza;z:/Software/lib/UART_UCA1_Release.hza;z:/Software/lib/commandLib_Release.hza;z:/Software/lib/SD-lib_UCA1_Release.hza"/>
   </project>
-  <configuration Name="MSP430 Debug" inherited_configurations="MSP430;Debug"/>
+  <configuration Name="MSP430 Debug" inherited_configurations="MSP430;Debug" linker_printf_fmt_level="long" linker_printf_fp_enabled="Yes"/>
   <configuration Name="MSP430" Platform="MSP430" hidden="Yes"/>
   <configuration Name="Debug" build_debug_information="Yes" hidden="Yes"/>
   <configuration Name="MSP430 Release" inherited_configurations="MSP430;Release"/>
