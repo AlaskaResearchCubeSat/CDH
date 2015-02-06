@@ -734,7 +734,7 @@ int hard_reset_Cmd(char **argv,unsigned short argc){
   //print out value
   printf("Setting pins 0x%02X\r\n",reset);
   //set correct output values
-  P8OUT=
+  P8OUT=LEDL_RST_PIN;   //LEDL is high all others are low
   //set pins to output
   P8DIR|=reset;
   //check if holding
