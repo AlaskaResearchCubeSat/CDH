@@ -676,8 +676,6 @@ int EPS_cmd(char **argv,unsigned short argc){
   return 0;
 }
 
-//reset pins for subsystems
-enum  {COMM_RST_PIN=BIT0,LEDL_RST_PIN=BIT1,ACDS_RST_PIN=BIT2,IMG_RST_PIN=BIT3};
 
 int hard_reset_Cmd(char **argv,unsigned short argc){
   int i,hold=0;
