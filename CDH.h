@@ -60,7 +60,7 @@ enum  {COMM_RST_PIN=BIT0,LEDL_RST_PIN=BIT1,ACDS_RST_PIN=BIT2,IMG_RST_PIN=BIT3};
 
 #define SOLAR_THRESHOLD         (750)
 #define ANT_DEPLOY_TIME         (10ul*60ul*1024ul) //10 minutes
-#define RF_ON_TIME              (24ul*60ul*1024ul) //45 min = 45*60*1024
+#define RF_ON_TIME              (45ul*60ul*1024ul) //45 min = 45*60*1024
 #define BEACON_ON_TIME          (7ul*24ul*60ul*60ul*1024ul) //1 week
 #define BURN_DELAY              (10ul*1024ul)  //10 sec
 
